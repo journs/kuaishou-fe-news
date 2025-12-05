@@ -4,7 +4,6 @@ import { RSSFetcher } from "../fetchers/rss-fetcher.js";
 import { KeywordParser } from "../filters/keyword-parser.js";
 import { ArticleFilter } from "../filters/article-filter.js";
 import { ArticleCache } from "../cache/article-cache.js";
-import { LanguageFilter } from "../filters/language-filter.js";
 import type { Article } from "../fetchers/rss-fetcher.js";
 import fs from 'fs';
 import path from 'path';
@@ -12,7 +11,6 @@ import path from 'path';
 export interface ProcessInfo {
   totalFetched: number;
   afterDeduplication: number;
-  afterLanguageFilter: number;
   afterKeywordFilter: number;
 }
 
@@ -121,44 +119,23 @@ export class ArticleService {
     );
 
     // 去重
-    let newArticles = articles.filter((article) => !cache.has(article.link));
+    const uniqueArticles = articles.filter((article: Article) => !cache.has(article.link));
 
-    if (newArticles.length === 0) {
+    if (uniqueArticles.length === 0) {
       return {
         articles: [],
         processInfo: {
           totalFetched: articles.length,
           afterDeduplication: 0,
-          afterLanguageFilter: 0,
-          afterKeywordFilter: 0,
-        },
-      };
-    }
-
-    // 语言过滤 - 过滤掉英文文章，只保留中文文章
-    const languageFilter = new LanguageFilter();
-    const chineseArticles = languageFilter.filterChinese(newArticles);
-    const englishArticles = languageFilter.filterEnglish(newArticles);
-
-    // 使用中文文章继续后续流程
-    newArticles = chineseArticles;
-
-    if (newArticles.length === 0) {
-      return {
-        articles: [],
-        processInfo: {
-          totalFetched: articles.length,
-          afterDeduplication: articles.filter((a) => !cache.has(a.link)).length,
-          afterLanguageFilter: 0,
           afterKeywordFilter: 0,
         },
       };
     }
 
     // 关键词过滤
-    let filteredArticles = newArticles;
-    if (articleFilter) {
-      filteredArticles = articleFilter.filter(newArticles);
+    let filteredArticles = uniqueArticles;
+    if (articleFilter && this.config.filter.enabled) {
+      filteredArticles = articleFilter.filter(uniqueArticles);
     }
 
     if (filteredArticles.length === 0) {
@@ -166,20 +143,19 @@ export class ArticleService {
         articles: [],
         processInfo: {
           totalFetched: articles.length,
-          afterDeduplication: articles.filter((a) => !cache.has(a.link)).length,
-          afterLanguageFilter: chineseArticles.length,
+          afterDeduplication: uniqueArticles.length,
           afterKeywordFilter: 0,
         },
       };
     }
 
-    // 过滤掉没有摘要的文章（对应原代码第111-112行）
-    filteredArticles = filteredArticles.filter((article) => article.summary);
+    // 过滤掉没有摘要的文章
+    filteredArticles = filteredArticles.filter((article: Article) => article.summary);
 
     // 按分类筛选
     if (category) {
       filteredArticles = filteredArticles.filter(
-        (article) => article.category === category
+        (article: Article) => article.category === category
       );
     }
 
@@ -189,15 +165,14 @@ export class ArticleService {
     }
 
     // 更新缓存（缓存所有新文章，不仅仅是匹配的）
-    articles.filter((article) => !cache.has(article.link)).forEach((article) =>
+    uniqueArticles.forEach((article: Article) =>
       cache.add(article.link)
     );
     cache.save();
 
     const processInfo: ProcessInfo = {
       totalFetched: articles.length,
-      afterDeduplication: articles.filter((a) => !cache.has(a.link)).length,
-      afterLanguageFilter: chineseArticles.length,
+      afterDeduplication: uniqueArticles.length,
       afterKeywordFilter: filteredArticles.length,
     };
 
