@@ -1,0 +1,54 @@
+# RSS 配置
+rss:
+  opml_path: "./config/feeds.opml"
+  max_articles_per_feed: 10
+  request_timeout: 50000
+  max_article_age_days: 7
+
+# 关键词过滤
+filter:
+  enabled: true
+  keywords_path: "./config/keywords.txt"
+
+# 钉钉推送
+dingtalk:
+  webhook: "" # 请通过环境变量 DINGTALK_WEBHOOK 设置（推荐）或直接填写
+  secret: "" # 请通过环境变量 DINGTALK_SECRET 设置（推荐）或直接填写
+  batch_size: 20000
+
+# 定时任务
+scheduler:
+  enabled: false
+  cron: "0 * * * *" # 每小时执行一次
+
+# 缓存
+cache:
+  path: "./data/cache.json"
+  retention_days: 30
+
+# 服务器配置
+server:
+  port: 3000
+  cors: true
+
+# API配置
+api:
+  default_limit: 50
+  max_limit: 200
+
+# AI 筛选（可选）
+ai:
+  enabled: false # 是否启用 AI 筛选功能
+  api_key: "" # DeepSeek API Key（推荐通过环境变量 DEEPSEEK_API_KEY 设置）
+  api_url: "https://api.deepseek.com/v1/chat/completions" # DeepSeek API 地址
+  model: "deepseek-chat" # 使用的模型
+  max_tokens: # 最大 token 数
+  temperature: 0.3 # 温度参数（0-1，越低越确定）
+  keywords_path: "./config/keywords.txt" # 关键词文件路径（AI 会参考这些关键词进行筛选）
+  prompt: | # 筛选要求（可自定义）
+    我是一名前端开发工程师，请你从文章列表中筛选出最有价值的技术文章，要求：
+    1. 重点选择前端与AI结合、前端技术、AI技术相关的
+    2. 优先选择深度技术文章（包含技术分析、实战经验、架构设计等）
+    3. 排除简单的新闻、公告、产品宣传
+    4. 排除过于基础的入门教程
+    5. 总共最多返回 30 篇文章
