@@ -15,7 +15,8 @@
     "watch": "nodemon --watch src --ext ts --exec tsx src/index.ts",
     "watch:server": "nodemon --watch src --ext ts --exec tsx src/server.ts",
     "test:notify": "tsx scripts/test-notify.ts",
-    "verify:config": "tsx scripts/verify-config.ts"
+    "verify:config": "tsx scripts/verify-config.ts",
+    "deploy:vercel": "chmod +x scripts/deploy-vercel.sh && ./scripts/deploy-vercel.sh"
   },
   "keywords": ["rss", "dingtalk", "notifier"],
   "author": "",

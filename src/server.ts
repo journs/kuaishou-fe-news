@@ -4,6 +4,8 @@ import { ArticleController } from "./controllers/article-controller.js";
 import { loadConfig } from "./config/config.js";
 import { fileURLToPath } from 'url';
 import { dirname as getDirname } from 'path';
+import fs from 'fs';
+import path from 'path';
 
 const app: Express = express();
 const config = loadConfig();
@@ -24,9 +26,6 @@ app.get("/api/articles", articleController.getArticles.bind(articleController));
 
 // 健康检查接口
 app.get("/health", (req: Request, res: Response) => {
-  const fs = require('fs');
-  const path = require('path');
-  
   // 获取当前目录信息
   const currentDir = process.cwd();
   
@@ -84,14 +83,17 @@ app.get("/health", (req: Request, res: Response) => {
   const fileStatus: any = {};
   Object.entries(configPaths).forEach(([key, filePath]) => {
     try {
+      const pathStr = String(filePath);
+      const exists = fs.existsSync(pathStr);
+      const size = exists ? fs.statSync(pathStr).size : 0;
       fileStatus[key] = {
-        path: filePath,
-        exists: fs.existsSync(filePath),
-        size: fs.existsSync(filePath) ? fs.statSync(filePath).size : 0
+        path: pathStr,
+        exists,
+        size
       };
     } catch (error: any) {
       fileStatus[key] = {
-        path: filePath,
+        path: String(filePath),
         exists: false,
         error: error?.message || 'Unknown error'
       };
