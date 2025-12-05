@@ -20,8 +20,5 @@
   "env": {
     "NODE_ENV": "production",
     "VERCEL": "1"
-  },
-  "includeFiles": [
-    "config/**"
-  ]
+  }
 }
