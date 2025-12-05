@@ -10,6 +10,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "start:server": "node dist/server.js",
+    "start:api": "NODE_ENV=production node dist/server.js",
     "watch": "nodemon --watch src --ext ts --exec tsx src/index.ts",
     "watch:server": "nodemon --watch src --ext ts --exec tsx src/server.ts",
     "test:notify": "tsx scripts/test-notify.ts"

@@ -98,11 +98,17 @@ export function loadConfig(): Config {
     config.ai.enabled = process.env.AI_ENABLED === "true";
   }
 
-  // 验证必填项
-  if (!config.dingtalk.webhook) {
-    throw new Error(
-      "钉钉 Webhook 未配置，请在 config.yaml 或 .env 中设置 DINGTALK_WEBHOOK"
-    );
+  // 验证必填项（仅在需要推送功能时检查）
+  // 注意：在API模式下，DingTalk配置不是必需的
+  if (process.env.NODE_ENV === 'production' && process.env.VERCEL) {
+    // Vercel环境（API模式），跳过DingTalk验证
+  } else {
+    // 本地环境或定时任务模式，需要DingTalk配置
+    if (!config.dingtalk.webhook) {
+      throw new Error(
+        "钉钉 Webhook 未配置，请在 config.yaml 或 .env 中设置 DINGTALK_WEBHOOK"
+      );
+    }
   }
 
   return config;

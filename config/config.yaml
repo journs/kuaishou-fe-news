@@ -10,13 +10,13 @@ filter:
   enabled: true
   keywords_path: "./config/keywords.txt"
 
-# 钉钉推送
+# 钉钉推送（API模式下可选）
 dingtalk:
   webhook: "" # 请通过环境变量 DINGTALK_WEBHOOK 设置（推荐）或直接填写
   secret: "" # 请通过环境变量 DINGTALK_SECRET 设置（推荐）或直接填写
   batch_size: 20000
 
-# 定时任务
+# 定时任务（API模式下通常不需要）
 scheduler:
   enabled: false
   cron: "0 * * * *" # 每小时执行一次
