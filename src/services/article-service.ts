@@ -33,19 +33,25 @@ export class ArticleService {
     // 1. 解析 OPML（适配 Vercel 环境）
     const parser = new OPMLParser();
     const opmlPath = process.env.VERCEL 
-      ? path.resolve(process.cwd(), this.config.rss.opml_path)
+      ? path.join(__dirname, '../config/feeds.opml')
       : this.config.rss.opml_path;
     const feeds = parser.parse(opmlPath);
 
-    // 2. 初始化缓存
-    const cache = new ArticleCache(this.config.cache.path);
+    // 2. 初始化缓存（Vercel环境使用临时目录）
+    const cachePath = process.env.VERCEL 
+      ? path.join('/tmp', 'cache.json')
+      : this.config.cache.path;
+    const cache = new ArticleCache(cachePath);
     cache.load();
 
     // 3. 加载关键词配置
     let articleFilter: ArticleFilter | null = null;
     if (this.config.filter.enabled) {
       const keywordParser = new KeywordParser();
-      const keywordConfig = keywordParser.parse(this.config.filter.keywords_path);
+      const keywordsPath = process.env.VERCEL 
+        ? path.join(__dirname, '../config/keywords.txt')
+        : this.config.filter.keywords_path;
+      const keywordConfig = keywordParser.parse(keywordsPath);
       articleFilter = new ArticleFilter(keywordConfig);
     }
 

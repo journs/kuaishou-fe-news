@@ -21,11 +21,49 @@ const articleController = new ArticleController();
 app.get("/api/articles", articleController.getArticles.bind(articleController));
 
 // 健康检查接口
-app.get("/health", (req, res) => {
+app.get("/health", (req: Request, res: Response) => {
+  const fs = require('fs');
+  const path = require('path');
+  
+  // 获取当前目录信息
+  const currentDir = process.cwd();
+  const dirname = __dirname;
+  
+  // 检查配置文件是否存在
+  const configPaths = {
+    yaml: path.join(__dirname, '../config/config.yaml'),
+    opml: path.join(__dirname, '../config/feeds.opml'),
+    keywords: path.join(__dirname, '../config/keywords.txt')
+  };
+  
+  const fileStatus: any = {};
+  Object.entries(configPaths).forEach(([key, filePath]) => {
+    try {
+      fileStatus[key] = {
+        path: filePath,
+        exists: fs.existsSync(filePath),
+        size: fs.existsSync(filePath) ? fs.statSync(filePath).size : 0
+      };
+    } catch (error: any) {
+      fileStatus[key] = {
+        path: filePath,
+        exists: false,
+        error: error?.message || 'Unknown error'
+      };
+    }
+  });
+  
   res.json({
     status: "ok",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+    environment: {
+      NODE_ENV: process.env.NODE_ENV,
+      VERCEL: process.env.VERCEL,
+      currentDir,
+      dirname
+    },
+    files: fileStatus
   });
 });
 

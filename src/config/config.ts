@@ -60,9 +60,14 @@ export interface Config {
  */
 export function loadConfig(): Config {
   // 适配不同环境的配置文件路径
-  const configPath = process.env.NODE_ENV === "production" 
-    ? path.resolve(process.cwd(), "config/config.yaml")
-    : path.resolve(process.cwd(), "config/config.yaml");
+  let configPath: string;
+  if (process.env.VERCEL) {
+    // Vercel 环境，使用编译后的相对路径
+    configPath = path.join(__dirname, '../config/config.yaml');
+  } else {
+    // 本地环境
+    configPath = path.resolve(process.cwd(), "config/config.yaml");
+  }
 
   // 读取 YAML 配置文件
   let config: Config;
