@@ -5,10 +5,9 @@ import { KeywordParser } from "../filters/keyword-parser.js";
 import { ArticleFilter } from "../filters/article-filter.js";
 import { ArticleCache } from "../cache/article-cache.js";
 import { LanguageFilter } from "../filters/language-filter.js";
+import { PathUtils } from "../utils/path-utils.js";
 import type { Article } from "../fetchers/rss-fetcher.js";
-import path from "path";
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import path from 'path';
 
 export interface ProcessInfo {
   totalFetched: number;
@@ -36,9 +35,12 @@ export class ArticleService {
     const parser = new OPMLParser();
     let opmlPath: string;
     if (process.env.VERCEL) {
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = dirname(__filename);
-      opmlPath = path.join(__dirname, '../config/feeds.opml');
+      // Vercel 环境，使用路径工具查找配置文件
+      opmlPath = PathUtils.loadConfigFile(
+        '../config/feeds.opml',
+        'OPML 文件',
+        ['/var/task/config/feeds.opml', '/var/task/src/config/feeds.opml']
+      );
     } else {
       opmlPath = this.config.rss.opml_path;
     }
@@ -57,9 +59,12 @@ export class ArticleService {
       const keywordParser = new KeywordParser();
       let keywordsPath: string;
       if (process.env.VERCEL) {
-        const __filename = fileURLToPath(import.meta.url);
-        const __dirname = dirname(__filename);
-        keywordsPath = path.join(__dirname, '../config/keywords.txt');
+        // Vercel 环境，使用路径工具查找配置文件
+        keywordsPath = PathUtils.loadConfigFile(
+          '../config/keywords.txt',
+          '关键词文件',
+          ['/var/task/config/keywords.txt', '/var/task/src/config/keywords.txt']
+        );
       } else {
         keywordsPath = this.config.filter.keywords_path;
       }

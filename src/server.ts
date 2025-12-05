@@ -2,8 +2,7 @@ import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import { ArticleController } from "./controllers/article-controller.js";
 import { loadConfig } from "./config/config.js";
-import { fileURLToPath } from 'url';
-import { dirname as getDirname } from 'path';
+import { PathUtils } from "./utils/path-utils.js";
 import fs from 'fs';
 import path from 'path';
 
@@ -34,42 +33,12 @@ app.get("/health", (req: Request, res: Response) => {
   let configPaths: any = {};
   
   if (process.env.VERCEL) {
-    // Vercel 环境
-    const __filename = fileURLToPath(import.meta.url);
-    dirname = getDirname(__filename);
-    
-    // 尝试多种可能的配置文件路径
-    const possiblePaths = [
-      'config/config.yaml',
-      '../config/config.yaml',
-      '../../config/config.yaml'
-    ];
-    
+    // Vercel 环境，使用路径工具查找配置文件
     configPaths = {
-      yaml: possiblePaths.find(p => fs.existsSync(path.join(dirname, p))) || path.join(dirname, 'config/config.yaml'),
-      opml: path.join(dirname, 'config/feeds.opml'),
-      keywords: path.join(dirname, 'config/keywords.txt')
+      yaml: PathUtils.findConfigFile('../config/config.yaml', ['/var/task/config/config.yaml']),
+      opml: PathUtils.findConfigFile('../config/feeds.opml', ['/var/task/config/feeds.opml']),
+      keywords: PathUtils.findConfigFile('../config/keywords.txt', ['/var/task/config/keywords.txt'])
     };
-    
-    // 检查实际存在的文件
-    Object.keys(configPaths).forEach(key => {
-      const fullPath = configPaths[key];
-      if (!fs.existsSync(fullPath)) {
-        // 尝试其他可能的路径
-        const basePath = dirname;
-        const fileName = path.basename(fullPath);
-        const alternativePaths = [
-          path.join(basePath, 'config', fileName),
-          path.join(basePath, '../config', fileName),
-          path.join(basePath, '../../config', fileName)
-        ];
-        
-        const existingPath = alternativePaths.find(p => fs.existsSync(p));
-        if (existingPath) {
-          configPaths[key] = existingPath;
-        }
-      }
-    });
   } else {
     // 本地环境
     dirname = process.cwd();

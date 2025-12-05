@@ -7,6 +7,7 @@ import type {
   AIArticleInput,
 } from "./types.js";
 import { articleToAIInput } from "./types.js";
+import { PathUtils } from "../utils/path-utils.js";
 
 /**
  * AI 文章筛选器
@@ -33,20 +34,12 @@ export class AIFilter {
       // 适配 Vercel 环境的路径
       let keywordsPath = this.config.keywords_path;
       if (process.env.VERCEL) {
-        const path = require('path');
-        const { fileURLToPath } = require('url');
-        const { dirname } = require('path');
-        const __filename = fileURLToPath(import.meta.url);
-        const __dirname = dirname(__filename);
-        
-        // 尝试多种可能的路径
-        const possiblePaths = [
-          path.join(__dirname, '../config/keywords.txt'),
-          path.join(__dirname, '../../config/keywords.txt'),
-          '/var/task/config/keywords.txt'
-        ];
-        
-        keywordsPath = possiblePaths.find(p => fs.existsSync(p)) || keywordsPath;
+        // Vercel 环境，使用路径工具查找配置文件
+        keywordsPath = PathUtils.loadConfigFile(
+          '../config/keywords.txt',
+          '关键词文件',
+          ['/var/task/config/keywords.txt', '/var/task/src/config/keywords.txt']
+        );
       }
 
       const content = fs.readFileSync(keywordsPath, "utf8");
