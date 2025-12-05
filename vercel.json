@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "src/server.ts": {
+      "maxDuration": 30
+    }
+  },
   "builds": [
     {
       "src": "src/server.ts",
@@ -15,5 +20,8 @@
   "env": {
     "NODE_ENV": "production",
     "VERCEL": "1"
-  }
+  },
+  "includeFiles": [
+    "config/**"
+  ]
 }

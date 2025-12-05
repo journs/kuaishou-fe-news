@@ -6,6 +6,7 @@ import { ArticleFilter } from "../filters/article-filter.js";
 import { ArticleCache } from "../cache/article-cache.js";
 import { LanguageFilter } from "../filters/language-filter.js";
 import type { Article } from "../fetchers/rss-fetcher.js";
+import path from "path";
 
 export interface ProcessInfo {
   totalFetched: number;
@@ -29,9 +30,12 @@ export class ArticleService {
   }> {
     const { limit, category, refresh = false } = options;
 
-    // 1. 解析 OPML
+    // 1. 解析 OPML（适配 Vercel 环境）
     const parser = new OPMLParser();
-    const feeds = parser.parse(this.config.rss.opml_path);
+    const opmlPath = process.env.VERCEL 
+      ? path.resolve(process.cwd(), this.config.rss.opml_path)
+      : this.config.rss.opml_path;
+    const feeds = parser.parse(opmlPath);
 
     // 2. 初始化缓存
     const cache = new ArticleCache(this.config.cache.path);
