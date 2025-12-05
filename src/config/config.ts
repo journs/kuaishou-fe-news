@@ -2,6 +2,8 @@ import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
 import dotenv from "dotenv";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 // 加载环境变量
 dotenv.config();
@@ -63,6 +65,8 @@ export function loadConfig(): Config {
   let configPath: string;
   if (process.env.VERCEL) {
     // Vercel 环境，使用编译后的相对路径
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
     configPath = path.join(__dirname, '../config/config.yaml');
   } else {
     // 本地环境

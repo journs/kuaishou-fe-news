@@ -2,6 +2,8 @@ import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import { ArticleController } from "./controllers/article-controller.js";
 import { loadConfig } from "./config/config.js";
+import { fileURLToPath } from 'url';
+import { dirname as getDirname } from 'path';
 
 const app: Express = express();
 const config = loadConfig();
@@ -27,14 +29,30 @@ app.get("/health", (req: Request, res: Response) => {
   
   // 获取当前目录信息
   const currentDir = process.cwd();
-  const dirname = __dirname;
   
-  // 检查配置文件是否存在
-  const configPaths = {
-    yaml: path.join(__dirname, '../config/config.yaml'),
-    opml: path.join(__dirname, '../config/feeds.opml'),
-    keywords: path.join(__dirname, '../config/keywords.txt')
-  };
+  // 在 ES 模块中获取 __dirname
+  let dirname = '';
+  let configPaths: any = {};
+  
+  if (process.env.VERCEL) {
+    // Vercel 环境
+    const __filename = fileURLToPath(import.meta.url);
+    dirname = getDirname(__filename);
+    
+    configPaths = {
+      yaml: path.join(dirname, '../config/config.yaml'),
+      opml: path.join(dirname, '../config/feeds.opml'),
+      keywords: path.join(dirname, '../config/keywords.txt')
+    };
+  } else {
+    // 本地环境
+    dirname = process.cwd();
+    configPaths = {
+      yaml: path.join(dirname, 'config/config.yaml'),
+      opml: path.join(dirname, 'config/feeds.opml'),
+      keywords: path.join(dirname, 'config/keywords.txt')
+    };
+  }
   
   const fileStatus: any = {};
   Object.entries(configPaths).forEach(([key, filePath]) => {
