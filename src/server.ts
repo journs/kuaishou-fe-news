@@ -2,7 +2,6 @@ import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import { ArticleController } from "./controllers/article-controller.js";
 import { loadConfig } from "./config/config.js";
-import { PathUtils } from "./utils/path-utils.js";
 import fs from 'fs';
 import path from 'path';
 
@@ -33,12 +32,42 @@ app.get("/health", (req: Request, res: Response) => {
   let configPaths: any = {};
   
   if (process.env.VERCEL) {
-    // Vercel 环境，使用路径工具查找配置文件
+    // Vercel 环境，尝试多种可能的配置文件路径
+    const __filename = new URL(import.meta.url).pathname;
+    const __dirname = path.dirname(__filename);
+
+    // 尝试的路径列表
+    const possiblePaths = [
+      'config/config.yaml',
+      '../config/config.yaml',
+      '../../config/config.yaml'
+    ];
+    
     configPaths = {
-      yaml: PathUtils.findConfigFile('../config/config.yaml', ['/var/task/config/config.yaml']),
-      opml: PathUtils.findConfigFile('../config/feeds.opml', ['/var/task/config/feeds.opml']),
-      keywords: PathUtils.findConfigFile('../config/keywords.txt', ['/var/task/config/keywords.txt'])
+      yaml: possiblePaths.find(p => fs.existsSync(path.join(__dirname, p))) || path.join(__dirname, 'config/config.yaml'),
+      opml: path.join(__dirname, '../config/feeds.opml'),
+      keywords: path.join(__dirname, '../config/keywords.txt')
     };
+    
+    // 检查实际存在的文件
+    Object.keys(configPaths).forEach(key => {
+      const fullPath = configPaths[key];
+      if (!fs.existsSync(fullPath)) {
+        // 尝试其他可能的路径
+        const basePath = __dirname;
+        const fileName = path.basename(fullPath);
+        const alternativePaths = [
+          path.join(basePath, 'config', fileName),
+          path.join(basePath, '../config', fileName),
+          path.join(basePath, '../../config', fileName)
+        ];
+        
+        const existingPath = alternativePaths.find(p => fs.existsSync(p));
+        if (existingPath) {
+          configPaths[key] = existingPath;
+        }
+      }
+    });
   } else {
     // 本地环境
     dirname = process.cwd();

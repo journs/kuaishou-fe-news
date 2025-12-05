@@ -1,5 +1,6 @@
 import axios from "axios";
 import fs from "fs";
+import path from "path";
 import type { Article } from "../fetchers/rss-fetcher.js";
 import type {
   AIFilterConfig,
@@ -7,7 +8,6 @@ import type {
   AIArticleInput,
 } from "./types.js";
 import { articleToAIInput } from "./types.js";
-import { PathUtils } from "../utils/path-utils.js";
 
 /**
  * AI 文章筛选器
@@ -19,7 +19,10 @@ export class AIFilter {
 
   constructor(config: AIFilterConfig) {
     this.config = config;
-    this.loadKeywords();
+  }
+
+  async initialize(): Promise<void> {
+    await this.loadKeywords();
   }
 
   /**
@@ -34,12 +37,22 @@ export class AIFilter {
       // 适配 Vercel 环境的路径
       let keywordsPath = this.config.keywords_path;
       if (process.env.VERCEL) {
-        // Vercel 环境，使用路径工具查找配置文件
-        keywordsPath = PathUtils.loadConfigFile(
-          '../config/keywords.txt',
-          '关键词文件',
-          ['/var/task/config/keywords.txt', '/var/task/src/config/keywords.txt']
-        );
+        // Vercel 环境，尝试多种可能的配置文件路径
+        const __filename = new URL(import.meta.url).pathname;
+        const __dirname = path.dirname(__filename);
+        
+        // 尝试的路径列表
+        const possiblePaths = [
+          path.join(__dirname, '../config/keywords.txt'),
+          path.join(__dirname, '../../config/keywords.txt'),
+          '/var/task/config/keywords.txt'
+        ];
+        
+        // 查找存在的配置文件
+        const foundPath = possiblePaths.find(p => fs.existsSync(p));
+        if (foundPath) {
+          keywordsPath = foundPath;
+        }
       }
 
       const content = fs.readFileSync(keywordsPath, "utf8");

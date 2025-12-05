@@ -17,11 +17,9 @@ export class PathUtils {
       return relativePath;
     }
 
-    // 获取当前文件的目录
-    const { fileURLToPath } = require('url');
-    const { dirname } = require('path');
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
+    // 获取当前文件的目录（使用同步方式）
+    const __filename = new URL(import.meta.url).pathname;
+    const __dirname = path.dirname(__filename);
 
     // 构建可能的路径列表
     const pathsToTry = [
@@ -62,10 +60,8 @@ export class PathUtils {
     }
 
     // 构建错误信息
-    const { fileURLToPath } = require('url');
-    const { dirname } = require('path');
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
+    const __filename = new URL(import.meta.url).pathname;
+    const __dirname = path.dirname(__filename);
 
     const defaultPaths = [
       path.join(__dirname, relativePath),

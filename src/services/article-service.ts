@@ -5,8 +5,8 @@ import { KeywordParser } from "../filters/keyword-parser.js";
 import { ArticleFilter } from "../filters/article-filter.js";
 import { ArticleCache } from "../cache/article-cache.js";
 import { LanguageFilter } from "../filters/language-filter.js";
-import { PathUtils } from "../utils/path-utils.js";
 import type { Article } from "../fetchers/rss-fetcher.js";
+import fs from 'fs';
 import path from 'path';
 
 export interface ProcessInfo {
@@ -35,12 +35,31 @@ export class ArticleService {
     const parser = new OPMLParser();
     let opmlPath: string;
     if (process.env.VERCEL) {
-      // Vercel 环境，使用路径工具查找配置文件
-      opmlPath = PathUtils.loadConfigFile(
-        '../config/feeds.opml',
-        'OPML 文件',
-        ['/var/task/config/feeds.opml', '/var/task/src/config/feeds.opml']
-      );
+      // Vercel 环境，尝试多种可能的配置文件路径
+      const __filename = new URL(import.meta.url).pathname;
+      const __dirname = path.dirname(__filename);
+      
+      // 尝试的路径列表
+      const possiblePaths = [
+        path.join(__dirname, '../config/feeds.opml'),     // dist/services/../config/feeds.opml
+        path.join(__dirname, '../../config/feeds.opml'),  // /var/task/config/feeds.opml
+        path.join(__dirname, '../../../config/feeds.opml') // 备用路径
+      ];
+      
+      // 查找存在的配置文件
+      const foundPath = possiblePaths.find(p => fs.existsSync(p));
+      
+      if (foundPath) {
+        opmlPath = foundPath;
+      } else {
+        // 如果都找不到，尝试使用环境变量
+        const envConfigPath = process.env.CONFIG_PATH || '/var/task/config/feeds.opml';
+        if (fs.existsSync(envConfigPath)) {
+          opmlPath = envConfigPath;
+        } else {
+          throw new Error(`OPML 文件不存在于任何预期位置:\n${possiblePaths.join('\n')}\n环境变量路径: ${envConfigPath}`);
+        }
+      }
     } else {
       opmlPath = this.config.rss.opml_path;
     }
@@ -59,12 +78,31 @@ export class ArticleService {
       const keywordParser = new KeywordParser();
       let keywordsPath: string;
       if (process.env.VERCEL) {
-        // Vercel 环境，使用路径工具查找配置文件
-        keywordsPath = PathUtils.loadConfigFile(
-          '../config/keywords.txt',
-          '关键词文件',
-          ['/var/task/config/keywords.txt', '/var/task/src/config/keywords.txt']
-        );
+        // Vercel 环境，尝试多种可能的配置文件路径
+        const __filename = new URL(import.meta.url).pathname;
+        const __dirname = path.dirname(__filename);
+        
+        // 尝试的路径列表
+        const possiblePaths = [
+          path.join(__dirname, '../config/keywords.txt'),     // dist/services/../config/keywords.txt
+          path.join(__dirname, '../../config/keywords.txt'),  // /var/task/config/keywords.txt
+          path.join(__dirname, '../../../config/keywords.txt') // 备用路径
+        ];
+        
+        // 查找存在的配置文件
+        const foundPath = possiblePaths.find(p => fs.existsSync(p));
+        
+        if (foundPath) {
+          keywordsPath = foundPath;
+        } else {
+          // 如果都找不到，尝试使用环境变量
+          const envConfigPath = process.env.CONFIG_PATH || '/var/task/config/keywords.txt';
+          if (fs.existsSync(envConfigPath)) {
+            keywordsPath = envConfigPath;
+          } else {
+            throw new Error(`关键词文件不存在于任何预期位置:\n${possiblePaths.join('\n')}\n环境变量路径: ${envConfigPath}`);
+          }
+        }
       } else {
         keywordsPath = this.config.filter.keywords_path;
       }
