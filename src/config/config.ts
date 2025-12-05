@@ -64,10 +64,31 @@ export function loadConfig(): Config {
   // 适配不同环境的配置文件路径
   let configPath: string;
   if (process.env.VERCEL) {
-    // Vercel 环境，使用编译后的相对路径
+    // Vercel 环境，尝试多种可能的路径
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
-    configPath = path.join(__dirname, '../config/config.yaml');
+    
+    // 尝试的路径列表
+    const possiblePaths = [
+      path.join(__dirname, 'config/config.yaml'),        // dist/config/config.yaml
+      path.join(__dirname, '../config/config.yaml'),     // /var/task/config/config.yaml
+      path.join(__dirname, '../../config/config.yaml')   // 备用路径
+    ];
+    
+    // 查找存在的配置文件
+    const foundPath = possiblePaths.find(p => fs.existsSync(p));
+    
+    if (foundPath) {
+      configPath = foundPath!;
+    } else {
+      // 如果都找不到，尝试使用环境变量
+      const envConfigPath = process.env.CONFIG_PATH || '/var/task/config/config.yaml';
+      if (fs.existsSync(envConfigPath)) {
+        configPath = envConfigPath;
+      } else {
+        throw new Error(`配置文件不存在于任何预期位置:\n${possiblePaths.join('\n')}\n环境变量路径: ${envConfigPath}`);
+      }
+    }
   } else {
     // 本地环境
     configPath = path.resolve(process.cwd(), "config/config.yaml");

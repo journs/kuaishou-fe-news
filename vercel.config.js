@@ -1,11 +1,12 @@
 /** @type {import('@vercel/build-utils').VercelConfig} */
 module.exports = {
   functions: {
-    "src/server.ts": {
+    "api/index.ts": {
       maxDuration: 30,
-      // 确保包含配置文件
       includeFiles: [
-        "config/**"
+        "src/config/config.yaml",
+        "src/config/feeds.opml", 
+        "src/config/keywords.txt"
       ]
     }
   },

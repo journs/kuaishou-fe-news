@@ -1,8 +1,12 @@
 {
   "functions": {
-    "src/server.ts": {
+    "api/index.ts": {
       "maxDuration": 30,
-      "includeFiles": "config/**"
+      "includeFiles": [
+        "src/config/config.yaml",
+        "src/config/feeds.opml",
+        "src/config/keywords.txt"
+      ]
     }
   }
 }
