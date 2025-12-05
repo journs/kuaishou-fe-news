@@ -30,12 +30,33 @@ export class AIFilter {
     }
 
     try {
-      const content = fs.readFileSync(this.config.keywords_path, "utf8");
+      // 适配 Vercel 环境的路径
+      let keywordsPath = this.config.keywords_path;
+      if (process.env.VERCEL) {
+        const path = require('path');
+        const { fileURLToPath } = require('url');
+        const { dirname } = require('path');
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = dirname(__filename);
+        
+        // 尝试多种可能的路径
+        const possiblePaths = [
+          path.join(__dirname, '../config/keywords.txt'),
+          path.join(__dirname, '../../config/keywords.txt'),
+          '/var/task/config/keywords.txt'
+        ];
+        
+        keywordsPath = possiblePaths.find(p => fs.existsSync(p)) || keywordsPath;
+      }
+
+      const content = fs.readFileSync(keywordsPath, "utf8");
       this.keywords = content.trim();
+      console.log(`✅ 成功加载关键词文件: ${keywordsPath}`);
     } catch (error) {
       console.warn(
         `⚠️  无法读取关键词文件: ${this.config.keywords_path}`
       );
+      console.warn(`错误详情: ${error instanceof Error ? error.message : String(error)}`);
       this.keywords = "";
     }
   }

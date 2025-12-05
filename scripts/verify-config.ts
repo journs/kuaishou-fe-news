@@ -45,6 +45,19 @@ otherFiles.forEach(file => {
   console.log(`  - ${file} ${exists ? '✅ 存在' : '❌ 不存在'} ${size > 0 ? `(大小: ${size} bytes)` : ''}`);
 });
 
+// 额外检查 Vercel 环境路径
+console.log('\n📁 检查 Vercel 环境路径:');
+const vercelPaths = [
+  '/var/task/config/feeds.opml',
+  '/var/task/config/keywords.txt'
+];
+
+vercelPaths.forEach(file => {
+  const exists = fs.existsSync(file);
+  const size = exists ? fs.statSync(file).size : 0;
+  console.log(`  - ${file} ${exists ? '✅ 存在' : '❌ 不存在'} ${size > 0 ? `(大小: ${size} bytes)` : ''}`);
+});
+
 // 尝试加载配置
 try {
   console.log('\n⚙️  尝试加载配置文件...');
